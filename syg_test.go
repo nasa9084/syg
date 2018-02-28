@@ -3,6 +3,7 @@ package syg_test
 import (
 	"os"
 	"runtime"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -11,11 +12,24 @@ import (
 )
 
 type checkCalled struct {
+	sync.Mutex
 	b bool
 }
 
+func (chk *checkCalled) B() bool {
+	chk.Mutex.Lock()
+	defer chk.Mutex.Unlock()
+	return chk.b
+}
+
+func (chk *checkCalled) SetB(b bool) {
+	chk.Mutex.Lock()
+	defer chk.Mutex.Unlock()
+	chk.b = b
+}
+
 func (chk *checkCalled) callback(os.Signal) {
-	chk.b = true
+	chk.SetB(true)
 }
 
 func TestSyg(t *testing.T) {
@@ -24,7 +38,7 @@ func TestSyg(t *testing.T) {
 	defer cancel()
 	syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 	time.Sleep(1 * time.Millisecond) // for-select looptime
-	if !chk.b {
+	if !chk.B() {
 		t.Error("callback should be called")
 		return
 	}
