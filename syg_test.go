@@ -33,14 +33,14 @@ func TestSyg(t *testing.T) {
 func TestCancel(t *testing.T) {
 	baseNumGoroutine := runtime.NumGoroutine()
 	cancel := syg.Listen(func(os.Signal) {}, os.Interrupt)
-	if runtime.NumGoroutine() != baseNumGoroutine+1 {
-		t.Errorf("listen goroutine should be running: %d != %d", runtime.NumGoroutine(), baseNumGoroutine+1)
+	if runtime.NumGoroutine() < baseNumGoroutine+1 {
+		t.Errorf("listen goroutine should be running: %d > %d", runtime.NumGoroutine(), baseNumGoroutine+1)
 		return
 	}
 	cancel()
 	time.Sleep(1 * time.Millisecond) // for-select looptime
-	if runtime.NumGoroutine() != baseNumGoroutine {
-		t.Errorf("listen goroutine should be canceled: %d != %d", runtime.NumGoroutine(), baseNumGoroutine)
+	if runtime.NumGoroutine() > baseNumGoroutine {
+		t.Errorf("listen goroutine should be canceled: %d > %d", runtime.NumGoroutine(), baseNumGoroutine)
 		return
 	}
 }
