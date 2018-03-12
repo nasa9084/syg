@@ -7,4 +7,19 @@ a very simple signal handler for golang
 
 ## SYNOPSIS
 
-see [Example](./syg_example_test.go).
+``` go
+func ExampleSyg() {
+    s := &http.Server{}
+    waitCh := make(chan struct{})
+
+    syg.Listen(func(os.Signal) {
+        s.Shutdown(context.Background())
+        close(waitCh)
+    }, os.Interrupt)
+
+    if err := s.ListenAndServe(); err != http.ErrServerClosed {
+        // some error handling
+    }
+    <-waitCh
+}
+```
